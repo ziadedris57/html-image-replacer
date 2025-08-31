@@ -1,27 +1,27 @@
 import streamlit as st
-import io
 from bs4 import BeautifulSoup
-import base64
 
 st.set_page_config(
     page_title="HTML Image Replacer",
     page_icon="🖼️"
 )
 
-# --- App Description and File Uploader ---
+# --- App Description and Text Area ---
 st.title("🖼️ HTML Image Replacer")
 st.markdown("""
 This app helps you find and replace image URLs in an HTML file.
-Upload your HTML file, see all the images, and replace them with new URLs.
+Paste your HTML text below, and you can replace the images with new URLs.
 """)
 
-uploaded_file = st.file_uploader("Upload an HTML file", type="html")
+with st.expander("Paste your HTML content here"):
+    html_content = st.text_area(
+        "Paste HTML text",
+        height=300,
+        placeholder="<!DOCTYPE html><html><body><img src='...' alt='...'</body></html>",
+        label_visibility="collapsed"
+    )
 
-if uploaded_file:
-    # Read the content of the uploaded file
-    file_content = uploaded_file.read()
-    html_content = file_content.decode("utf-8")
-    
+if html_content:
     soup = BeautifulSoup(html_content, 'html.parser')
     images = soup.find_all('img')
     
@@ -40,9 +40,8 @@ if uploaded_file:
     if not images:
         st.warning("No image tags found in the HTML file.")
     else:
-        st.info("Found {} images. Replace the URLs below.".format(len(images)))
+        st.info(f"Found {len(images)} images. Replace the URLs below.")
 
-        # Create a form to handle all inputs at once
         with st.form("image_replacement_form"):
             new_urls = []
             for i, img in enumerate(images):
@@ -65,24 +64,16 @@ if uploaded_file:
             
             if submitted:
                 st.markdown("---")
-                st.header("3. Download Your Updated HTML File")
+                st.header("3. Copy Your Updated HTML Text")
                 
-                # Update the src attributes in the BeautifulSoup object
                 for i, img in enumerate(images):
                     if new_urls[i] and new_urls[i] != img.get('src'):
                         img['src'] = new_urls[i]
                 
-                # Get the modified HTML content
                 modified_html = soup.prettify()
 
-                # Create a download button for the new HTML file
-                st.download_button(
-                    label="Download Updated HTML",
-                    data=modified_html,
-                    file_name=uploaded_file.name,
-                    mime="text/html"
-                )
-                st.success("Your file is ready for download! The changes have been applied.")
+                st.code(modified_html, language='html')
+                st.success("Your updated HTML is ready to be copied and used.")
 
 else:
-    st.info("Please upload an HTML file to get started.")
+    st.info("Please paste HTML content to get started.")
