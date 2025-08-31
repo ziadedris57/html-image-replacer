@@ -43,9 +43,11 @@ if html_content:
         st.info(f"Found {len(images)} images. Replace the URLs below.")
 
         with st.form("image_replacement_form"):
-            new_urls = []
+            updates = []
             for i, img in enumerate(images):
                 current_src = img.get('src')
+                current_width = img.get('width')
+                current_height = img.get('height')
                 
                 col1, col2 = st.columns([1, 3])
                 with col1:
@@ -57,8 +59,15 @@ if html_content:
 
                 with col2:
                     st.text(f"Current URL:")
-                    new_url = st.text_input(f"New URL for Image {i+1}", value=current_src, key=f"url_{i}")
-                    new_urls.append(new_url)
+                    new_src = st.text_input(f"New URL for Image {i+1}", value=current_src, key=f"url_{i}")
+                    
+                    st.text(f"Width:")
+                    new_width = st.text_input(f"New Width for Image {i+1}", value=current_width or "", key=f"width_{i}")
+                    
+                    st.text(f"Height:")
+                    new_height = st.text_input(f"New Height for Image {i+1}", value=current_height or "", key=f"height_{i}")
+                    
+                    updates.append({'src': new_src, 'width': new_width, 'height': new_height})
 
             submitted = st.form_submit_button("Replace Images & Generate New HTML")
             
@@ -67,8 +76,21 @@ if html_content:
                 st.header("3. Copy Your Updated HTML Text")
                 
                 for i, img in enumerate(images):
-                    if new_urls[i] and new_urls[i] != img.get('src'):
-                        img['src'] = new_urls[i]
+                    # Update src
+                    if updates[i]['src'] and updates[i]['src'] != img.get('src'):
+                        img['src'] = updates[i]['src']
+                    
+                    # Update width
+                    if updates[i]['width']:
+                        img['width'] = updates[i]['width']
+                    elif 'width' in img.attrs:
+                        del img['width']
+                    
+                    # Update height
+                    if updates[i]['height']:
+                        img['height'] = updates[i]['height']
+                    elif 'height' in img.attrs:
+                        del img['height']
                 
                 modified_html = soup.prettify()
 
